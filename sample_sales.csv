@@ -1,0 +1,7 @@
+region,product,revenue,quarter
+North America,Product A,50000,Q1
+Europe,Product B,42000,Q1
+Asia,Product C,38000,Q1
+North America,Product B,60000,Q2
+Europe,Product A,45000,Q2
+Asia,Product B,39000,Q2
