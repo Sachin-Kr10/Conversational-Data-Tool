@@ -3,45 +3,57 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import google.generativeai as genai
 
-genai.configure(api_key="AIzaSyAJYVU0NeEyrujZU1k2lnWlHCR8hnZa55g")
+st.set_page_config(page_title="Talking Rabbitt", layout="wide")
 
-st.title("Talking Rabbitt - Conversational Analytics")
+st.title("Talking Rabbitt 🐰")
+st.write("Talk to your business data. Upload a CSV and ask questions.")
 
-file = st.file_uploader("Upload Sales CSV", type=["csv"])
+api_key = st.secrets["GEMINI_API_KEY"]
+genai.configure(api_key=api_key)
 
-if file:
-    df = pd.read_csv(file)
+uploaded_file = st.file_uploader("Upload Sales CSV", type=["csv"])
 
-    st.subheader("Dataset Preview")
-    st.write(df)
+if uploaded_file is not None:
+    try:
+        df = pd.read_csv(uploaded_file)
 
-    question = st.text_input("Ask a question about the data")
+        st.subheader("Dataset Preview")
+        st.dataframe(df)
 
-    if question:
-        prompt = f"""
-        You are a data analyst.
+        question = st.text_input("Ask a question about your data")
 
-        Dataset:
-        {df.head(50)}
+        if question:
+            prompt = f"""
+            You are a business data analyst.
 
-        Question:
-        {question}
+            Here is the dataset:
+            {df.head(50).to_string()}
 
-        Answer clearly in one sentence.
-        """
+            Question: {question}
 
-        model = genai.GenerativeModel("gemini-1.5-flash")
+            Provide a short clear answer.
+            """
 
-        response = model.generate_content(prompt)
+            model = genai.GenerativeModel("gemini-1.5-flash")
+            response = model.generate_content(prompt)
 
-        st.subheader("AI Answer")
-        st.write(response.text)
+            st.subheader("AI Answer")
+            st.write(response.text)
 
-        if "revenue" in df.columns and "region" in df.columns:
-            st.subheader("Revenue by Region")
+            if "region" in df.columns and "revenue" in df.columns:
+                st.subheader("Revenue by Region")
 
-            chart = df.groupby("region")["revenue"].sum()
+                chart_data = df.groupby("region")["revenue"].sum()
 
-            chart.plot(kind="bar")
+                fig, ax = plt.subplots()
+                chart_data.plot(kind="bar", ax=ax)
 
-            st.pyplot(plt)
+                ax.set_xlabel("Region")
+                ax.set_ylabel("Revenue")
+                ax.set_title("Revenue by Region")
+
+                st.pyplot(fig)
+
+    except Exception as e:
+        st.error("Error reading the file or processing data.")
+        st.exception(e)
